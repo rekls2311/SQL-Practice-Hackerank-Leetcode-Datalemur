@@ -66,6 +66,7 @@ LEFT JOIN page_likes AS B
 ON A.page_id = B.page_id
 where B.page_id IS NULL
 
+--Datalemur Active User Retention
 --INPUT
 --OUTPUT
 --CONDITON CLAUSE: 
