@@ -87,3 +87,86 @@ FROM
     June2022ActiveUsers AS J -- Users active in June
 INNER JOIN
     July2022ActiveUsers AS L ON J.user_id = L.user_id; -- Join to find users active in both months
+
+--Leetcode Monthly transactions:
+SELECT to_char(trans_date,'YYYY-MM') AS month, country, count(id) as trans_count, 
+SUM(CASE WHEN state = 'approved' THEN 1 ELSE 0 END) as approved_count, SUM(amount) as trans_total_amount , SUM(CASE WHEN state = 'approved' THEN amount ELSE 0 END) AS approved_total_amount 
+FROM Transactions 
+GROUP BY to_char(trans_date,'YYYY-MM'), country
+
+--Leetcode Product sales Analysis 
+WITH CTE AS (
+    SELECT
+        product_id,
+        year,
+        ROW_NUMBER() OVER (PARTITION BY product_id ORDER BY year ASC) as row_num -- Assign a rank to each year for a product, ordered by year
+    FROM
+        Sales
+)
+SELECT
+    A.product_id,
+    A.year as first_year  ,
+    B.quantity,
+    B.price
+FROM
+    CTE as A
+LEFT JOIN
+    Sales  AS B ON A.product_id = B.product_id AND A.year = B.year
+WHERE
+    row_num = 1 -- Now, filter for the first year (rank 1) for each product
+ORDER BY
+    product_id;
+
+--Leetcode Who bought all products
+SELECT customer_id 
+FROM Customer
+GROUP BY customer_id 
+HAVING COUNT(DISTINCT product_key) = 
+(select count (DISTINCT product_key)
+FROM Product)                                 
+
+--Leetcode Employees Whose Manager Left the Company
+with cte as (
+SELECT employee_id, manager_id 
+from Employees 
+WHERE salary < 30000)
+
+SELECT employee_id 
+FROM cte
+where manager_id NOT IN (SELECT employee_id FROM Employees  )
+
+--Leetcode Primary Department for each employees
+with cte as (
+SELECT employee_id, department_id, primary_flag ,(ROW_NUMBER() OVER (PARTITION BY employee_id ORDER BY primary_flag desc)) AS row_number
+FROM Employee)
+
+SELECT employee_id , department_id 
+from CTE 
+where row_number = 1
+
+--Leetcode Movie Rating. 
+
+--Find the name of the user who has rated the greatest number of movies. In case of a tie, return the lexicographically smaller user name.
+
+SELECT B.name
+FROM MovieRating AS A
+JOIN Users AS B ON A.user_id = B.user_id
+GROUP BY B.name
+ORDER BY COUNT(A.user_id) DESC, B.name ASC
+Limit 1
+
+--Leetcode who has the most friends
+-- Write your PostgreSQL query statement below
+with cte as (
+SELECT requester_id as id, accepter_id 
+FROM RequestAccepted
+Union
+SELECT accepter_id AS id, requester_id
+FROM RequestAccepted
+)
+select id, count(distinct accepter_id) as num
+from cte
+group by id
+order by num desc
+limit 1
+
