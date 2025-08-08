@@ -28,3 +28,31 @@ where login_rank = 1
 SELECT ROUND(SUM(CONSECUTIVE_LOGIN)*1.0 / COUNT(PLAYER_ID),2) AS fraction
 from cte2
 
+--Restaurant Growth
+-- Write your PostgreSQL query statement below
+WITH CTE AS (
+SELECT  visited_on, SUM(AMOUNT) AS total_amount
+from Customer
+GROUP BY visited_on
+order by visited_on asc),
+CTE2 AS (
+SELECT VISITED_ON, ROUND(SUM(TOTAL_AMOUNT) OVER (ORDER BY VISITED_ON ROWS BETWEEN 6 PRECEDING AND CURRENT ROW),2) AS AMOUNT, ROUND(AVG(TOTAL_AMOUNT) OVER (ORDER BY VISITED_ON ROWS BETWEEN 6 PRECEDING AND CURRENT ROW),2) AS AVERAGE_AMOUNT, ROW_NUMBER() OVER (ORDER BY VISITED_ON) AS DAY
+FROM CTE )
+
+SELECT VISITED_ON, AMOUNT, AVERAGE_AMOUNT
+FROM CTE2
+WHERE DAY >=7
+
+-- Investment in 2016
+-- Write your PostgreSQL query statement below
+with cte as (
+select *,
+count(*) over(partition by tiv_2015) as firstsame,
+count(*) over(partition by lat,lon) as secondunique
+from insurance
+order by pid asc)
+
+SELECT ROUND(SUM(TIV_2016)::numeric, 2) AS TIV_2016 
+FROM CTE
+WHERE FIRSTSAME !=1 AND SECONDUNIQUE = 1
+
